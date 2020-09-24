@@ -19,6 +19,8 @@ struct XCTask {
   int32_t                             nbe;
 
   double                              dist_nearest;
+  double                              dist_from_center_to_parent;
+  double                              dist_from_closest_to_parent;
 
   void merge_with( const XCTask& other ) {
     if( shell_list != other.shell_list or iParent != other.iParent )

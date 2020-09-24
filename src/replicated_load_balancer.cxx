@@ -170,6 +170,58 @@ std::vector< XCTask > ReplicatedLoadBalancer::create_local_tasks_() const  {
       // Course grain screening
       if( not shell_list.size() ) continue; 
 
+      // Sort Points decending based on distance to parent center
+      double dist_from_closest_to_parent;
+      {
+        std::vector<double> pt_dist( points.size() );
+        for( int32_t i = 0; i < points.size(); ++i ) {
+          const auto dist_i_x = points[i][0] - center[0];
+          const auto dist_i_y = points[i][1] - center[1];
+          const auto dist_i_z = points[i][2] - center[2];
+
+          pt_dist[i] = std::sqrt(
+            dist_i_x * dist_i_x +
+            dist_i_y * dist_i_y +
+            dist_i_z * dist_i_z
+          );
+        }
+
+        std::vector<int32_t> pt_indx( points.size() );
+        std::iota( pt_indx.begin(), pt_indx.end(), 0 );
+        std::sort( pt_indx.begin(), pt_indx.end(), 
+        [&]( const auto& i, const auto& j ) {
+          return pt_dist[i] > pt_dist[j];
+        });
+
+        dist_from_closest_to_parent = pt_dist[ pt_indx.back() ];
+
+        decltype(points)  tmp_points( points.size() );
+        decltype(weights) tmp_weights( weights.size() );
+
+        for( int32_t i = 0; i < points.size(); ++i ) {
+          tmp_points[i]  = points [ pt_indx[i] ];
+          tmp_weights[i] = weights[ pt_indx[i] ];
+        }
+
+        points  = std::move( tmp_points );
+        weights = std::move( tmp_weights );
+      }
+
+      // Calculate distance to parent center
+      const double batch_center_x = (up[0] + lo[0]) / 2.;
+      const double batch_center_y = (up[1] + lo[1]) / 2.;
+      const double batch_center_z = (up[2] + lo[2]) / 2.;
+
+      const double dist_from_center_to_parent_x = batch_center_x - center[0];
+      const double dist_from_center_to_parent_y = batch_center_y - center[1];
+      const double dist_from_center_to_parent_z = batch_center_z - center[2];
+
+      const double dist_from_center_to_parent = std::sqrt(
+        dist_from_center_to_parent_x * dist_from_center_to_parent_x +
+        dist_from_center_to_parent_y * dist_from_center_to_parent_y +
+        dist_from_center_to_parent_z * dist_from_center_to_parent_z 
+      );
+
       // Copy task data
       XCTask task;
       task.iParent    = iCurrent;
@@ -178,6 +230,7 @@ std::vector< XCTask > ReplicatedLoadBalancer::create_local_tasks_() const  {
       task.shell_list = std::move(shell_list);
       task.nbe        = nbe;
       task.dist_nearest = molmeta_->dist_nearest()[iCurrent];
+
 
       #pragma omp critical
       temp_tasks.push_back( 

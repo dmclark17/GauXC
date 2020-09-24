@@ -144,12 +144,12 @@ std::tuple< task_iterator, device_task_container<F> >
   auto task_it = task_begin;
   while( task_it != task_end ) {
 
-    auto iAtom      = task_it->iParent;
-    auto points     = task_it->points    ;
-    auto weights    = task_it->weights   ;
-    auto shell_list = task_it->shell_list;
-    auto nbe        = task_it->nbe;
-    auto dist_nearest = task_it->dist_nearest;
+    auto  iAtom      = task_it->iParent;
+    auto& points     = task_it->points    ;
+    auto& weights    = task_it->weights   ;
+    auto& shell_list = task_it->shell_list;
+    auto  nbe        = task_it->nbe;
+    auto  dist_nearest = task_it->dist_nearest;
 
     // Generate map from compressed to non-compressed matrices
     auto submat_cut = integrator::gen_compressed_submat_map( basis, shell_list );
@@ -239,6 +239,57 @@ std::tuple< task_iterator, device_task_container<F> >
     total_nshells  += nshells;
     total_ncut     += ncut;
 
+
+    // Add task
+    tasks_device.emplace_back();
+
+    tasks_device.back().nbe          = nbe;
+    tasks_device.back().npts         = npts;
+    tasks_device.back().ncut         = ncut;
+    tasks_device.back().nshells      = nshells;
+    tasks_device.back().iParent      = iAtom;
+    tasks_device.back().dist_nearest = dist_nearest;
+  }
+
+
+  // Sort based on atomic index
+  std::vector<int32_t> task_indx( tasks_device.size() );
+  std::iota( task_indx.begin(), task_indx.end(), 0 );
+  std::sort( task_indx.begin(), task_indx.end(),
+    [&]( const auto& a, const auto& b ){
+      return tasks_device[a].iParent < tasks_device[b].iParent;
+    } );
+
+  {
+    decltype(tasks_device) tmp( tasks_device.size() );
+    for( auto iT = 0; iT < tmp.size(); ++iT )
+      tmp[iT] = tasks_device[ task_indx[iT] ];
+    tasks_device = std::move( tmp );
+  }
+
+  // Pack data on host
+  for( auto iT = 0; iT < tasks_device.size(); ++iT ) {
+
+    const auto& host_task = *(task_begin + task_indx[iT]);
+    const auto& task      = tasks_device[iT];
+
+    auto nbe          = task.nbe;
+    auto npts         = task.npts;
+    auto ncut         = task.ncut;
+    auto nshells      = task.nshells;
+    auto iParent      = task.iParent;
+    auto dist_nearest = task.dist_nearest;
+
+    auto& points     = host_task.points;
+    auto& weights    = host_task.weights;
+    auto& shell_list = host_task.shell_list;
+
+
+    // Generate map from compressed to non-compressed matrices
+    // XXX: THIS IS REDUNDANT: NEED TO PRECOMPUTE THESE
+    auto submat_cut   = integrator::gen_compressed_submat_map( basis, shell_list );
+
+
     // Compute offsets
     std::vector< size_t > shell_offs( nshells );
     shell_offs.at(0) = 0;
@@ -262,18 +313,9 @@ std::tuple< task_iterator, device_task_container<F> >
     ldb_array.emplace_back( nbe  );
     ldc_array.emplace_back( nbe  );
 
-    iparent_pack.insert( iparent_pack.end(), npts, iAtom );
+    iparent_pack.insert( iparent_pack.end(), npts, iParent );
     dist_nearest_pack.insert( dist_nearest_pack.end(), npts, dist_nearest );
 
-    // Add task
-    tasks_device.emplace_back();
-
-    tasks_device.back().nbe          = nbe;
-    tasks_device.back().npts         = npts;
-    tasks_device.back().ncut         = ncut;
-    tasks_device.back().nshells      = nshells;
-    tasks_device.back().iParent      = iAtom;
-    tasks_device.back().dist_nearest = dist_nearest;
   }
 
 
