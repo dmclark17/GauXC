@@ -224,12 +224,14 @@ std::vector< XCTask > ReplicatedLoadBalancer::create_local_tasks_() const  {
 
       // Copy task data
       XCTask task;
-      task.iParent    = iCurrent;
-      task.points     = std::move( points );
-      task.weights    = std::move( weights );
-      task.shell_list = std::move(shell_list);
-      task.nbe        = nbe;
-      task.dist_nearest = molmeta_->dist_nearest()[iCurrent];
+      task.iParent                     = iCurrent;
+      task.points                      = std::move( points );
+      task.weights                     = std::move( weights );
+      task.shell_list                  = std::move(shell_list);
+      task.nbe                         = nbe;
+      task.dist_nearest                = molmeta_->dist_nearest()[iCurrent];
+      task.dist_from_center_to_parent  = dist_from_center_to_parent;
+      task.dist_from_closest_to_parent = dist_from_closest_to_parent;
 
 
       #pragma omp critical

@@ -252,12 +252,20 @@ std::tuple< task_iterator, device_task_container<F> >
   }
 
 
-  // Sort based on atomic index
+  // Sort tasks lexiographically on parent index and distance to parent center
   std::vector<int32_t> task_indx( tasks_device.size() );
   std::iota( task_indx.begin(), task_indx.end(), 0 );
   std::sort( task_indx.begin(), task_indx.end(),
     [&]( const auto& a, const auto& b ){
-      return tasks_device[a].iParent < tasks_device[b].iParent;
+      const auto& task_a = *(task_begin + a);
+      const auto& task_b = *(task_begin + b);
+    
+      std::pair<int, double> 
+        a_pair( task_a.iParent, task_a.dist_from_center_to_parent );
+      std::pair<int, double> 
+        b_pair( task_b.iParent, task_b.dist_from_center_to_parent );
+
+      return a_pair < b_pair;
     } );
 
   {
