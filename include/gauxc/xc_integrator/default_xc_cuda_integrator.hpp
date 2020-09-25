@@ -62,9 +62,10 @@ typename DefaultXCCudaIntegrator<MatrixType>::exc_vxc_type
   MPI_Comm_rank( this->comm_, &world_rank );
   MPI_Comm_size( this->comm_, &world_size );
 
-  //MPI_Comm node_comm;
-  //MPI_Comm_split_type(this->comm_, MPI_COMM_TYPE_SHARED, 0,
-  //                    MPI_INFO_NULL, &node_comm);
+/* XXX: Does not work on Summit
+  MPI_Comm node_comm;
+  MPI_Comm_split_type(this->comm_, MPI_COMM_TYPE_SHARED, 0,
+                      MPI_INFO_NULL, &node_comm);
 
   //int32_t node_rank, node_size;
   //MPI_Comm_rank( node_comm, &node_rank );
@@ -73,7 +74,8 @@ typename DefaultXCCudaIntegrator<MatrixType>::exc_vxc_type
   //if( node_size > device_count )
   //  throw std::runtime_error("GauXC + CUDA Assumes MPI <-> GPU is 1-to-1");
 
-  //cudaSetDevice( node_rank );
+  cudaSetDevice( node_rank );
+*/
 #endif
 
 
