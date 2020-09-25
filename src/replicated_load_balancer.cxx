@@ -170,6 +170,7 @@ std::vector< XCTask > ReplicatedLoadBalancer::create_local_tasks_() const  {
       // Course grain screening
       if( not shell_list.size() ) continue; 
 
+#if 0
       // Sort Points decending based on distance to parent center
       double dist_from_closest_to_parent;
       {
@@ -221,6 +222,10 @@ std::vector< XCTask > ReplicatedLoadBalancer::create_local_tasks_() const  {
         dist_from_center_to_parent_y * dist_from_center_to_parent_y +
         dist_from_center_to_parent_z * dist_from_center_to_parent_z 
       );
+#else
+      const double dist_from_center_to_parent  = 0.;
+      const double dist_from_closest_to_parent = 0.;
+#endif
 
       // Copy task data
       XCTask task;

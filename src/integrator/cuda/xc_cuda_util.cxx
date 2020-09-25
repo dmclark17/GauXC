@@ -123,10 +123,16 @@ void process_batches_cuda_replicated_all_device(
 
 
   // Evaluate Partition Weights
+#if 1
   partition_weights_cuda_SoA( weight_alg, total_npts, cuda_data.natoms, 
                               points_device, iparent_device, dist_nearest_device,
                               rab_device, coords_device, weights_device, 
                               dist_scratch_device, master_stream );
+#else
+  partition_weights_cuda_AoS( weight_alg, ntasks, total_npts, cuda_data.natoms,
+                              points_device, rab_device, coords_device,
+                              tasks_device, dist_scratch_device, master_stream );
+#endif
 
 
   // Evaluate Collocation

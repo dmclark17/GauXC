@@ -255,6 +255,7 @@ std::tuple< task_iterator, device_task_container<F> >
   // Sort tasks lexiographically on parent index and distance to parent center
   std::vector<int32_t> task_indx( tasks_device.size() );
   std::iota( task_indx.begin(), task_indx.end(), 0 );
+#if 0
   std::sort( task_indx.begin(), task_indx.end(),
     [&]( const auto& a, const auto& b ){
       const auto& task_a = *(task_begin + a);
@@ -274,6 +275,8 @@ std::tuple< task_iterator, device_task_container<F> >
       tmp[iT] = tasks_device[ task_indx[iT] ];
     tasks_device = std::move( tmp );
   }
+#endif
+
 
   // Pack data on host
   for( auto iT = 0; iT < tasks_device.size(); ++iT ) {
