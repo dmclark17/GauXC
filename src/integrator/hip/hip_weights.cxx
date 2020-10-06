@@ -4,6 +4,7 @@
 #include "hip_weights.hpp"
 #include "integrator_constants.hpp"
 #include "hip_extensions.hpp"
+#include "hip_device_properties.hpp"
 
 constexpr double eps_d = std::numeric_limits<double>::epsilon();
 
@@ -381,7 +382,7 @@ void partition_weights_hip_SoA( XCWeightAlg    weight_alg,
   // Evaluate point-to-atom collocation
   {
 
-    dim3 threads( 32, 32 );
+    dim3 threads( warp_size, max_warps_per_thread_block );
     dim3 blocks( util::div_ceil( npts,   threads.x ), 
                  util::div_ceil( natoms, threads.y ) );
 
@@ -395,7 +396,7 @@ void partition_weights_hip_SoA( XCWeightAlg    weight_alg,
 
   if( partition_weights_1d_kernel ) {
 
-    dim3 threads(1024);
+    dim3 threads(max_threads_per_thread_block);
     dim3 blocks( util::div_ceil( npts, threads.x ));
     hipLaunchKernelGGL(modify_weights_ssf_kernel_1d, dim3(blocks), dim3(threads), 0, stream , 
       npts, natoms, rab_device, atomic_coords_device, dist_scratch_device, 
@@ -406,6 +407,7 @@ void partition_weights_hip_SoA( XCWeightAlg    weight_alg,
 #if 0
   else {
 
+#if 0
     dim3 threads( 32, 32 );
     dim3 blocks ( npts, 1 );
 
@@ -419,6 +421,7 @@ void partition_weights_hip_SoA( XCWeightAlg    weight_alg,
         npts, natoms, rab_device, atomic_coords_device, dist_scratch_device, 
         iparent_device, weights_device
       );
+#endif
 
   }
 #endif

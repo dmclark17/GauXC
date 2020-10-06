@@ -1,4 +1,3 @@
-#include "hip/hip_runtime.h"
 #pragma once
 #include <hip/hip_runtime.h>
 #include <hipcub/hipcub.hpp>
@@ -10,9 +9,9 @@ __inline__ __device__
 double warpReduceSum(double val) {
 
   using warp_reducer = hipcub::WarpReduce<double>;
-  static __shared__ typename warp_reducer::TempStorage temp_storage[1024];
+  static __shared__ typename warp_reducer::TempStorage temp_storage[max_warps_per_thread_block];
   int tid = threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y;
-  int warp_lane = tid / 32;
+  int warp_lane = tid / warp_size;
   val = warp_reducer( temp_storage[warp_lane] ).Sum( val );
 
   return val;
