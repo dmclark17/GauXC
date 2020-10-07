@@ -9,6 +9,12 @@
 
 #include "hip_device_properties.hpp"
 
+#define HIP_CHECK(err, s) \
+if (err != hipSuccess) { \
+      printf("%s (error code %d:%s)!\n", s, err, hipGetErrorString(err)); \
+      exit(EXIT_FAILURE); \
+}
+
 namespace GauXC      {
 namespace integrator {
 namespace hip       {
@@ -32,8 +38,10 @@ void eval_collocation_petite(
   dim3 blocks( util::div_ceil( npts,    threads.x ),
                util::div_ceil( nshells, threads.y ) );
 
-  hipLaunchKernelGGL(HIP_KERNEL_NAME(collocation_device_petite_kernel<T>), dim3(blocks), dim3(threads), 0, stream,  nshells, nbf, npts, shells_device, offs_device,
-      pts_device, eval_device );
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(collocation_device_petite_kernel<T>), dim3(blocks), dim3(threads), 
+                     0, stream,  nshells, nbf, npts, shells_device, offs_device, pts_device, eval_device );
+  hipDeviceSynchronize();
+  HIP_CHECK(hipGetLastError(), "collocation_device_petite_kernel Failed");
 
 }
  
@@ -74,9 +82,10 @@ void eval_collocation_masked(
   dim3 blocks( util::div_ceil( npts,    threads.x ),
                util::div_ceil( nshells, threads.y ) );
 
-  hipLaunchKernelGGL(HIP_KERNEL_NAME(collocation_device_masked_kernel<T>), dim3(blocks), dim3(threads), 0, stream,  nshells, nbf, npts, shells_device, mask_device,
-      offs_device, pts_device, eval_device );
-
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(collocation_device_masked_kernel<T>), dim3(blocks), dim3(threads), 
+                     0, stream,  nshells, nbf, npts, shells_device, mask_device, offs_device, pts_device, eval_device );
+  hipDeviceSynchronize();
+  HIP_CHECK(hipGetLastError(), "collocation_device_masked_kernel Failed");
 }
  
 template             
@@ -109,7 +118,10 @@ void eval_collocation_petite_combined(
                util::div_ceil( nshells_max, threads.y ),
                ntasks );
 
-  hipLaunchKernelGGL(HIP_KERNEL_NAME(collocation_device_petite_combined_kernel<T>), dim3(blocks), dim3(threads), 0, stream,  ntasks, device_tasks );
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(collocation_device_petite_combined_kernel<T>), dim3(blocks), dim3(threads), 
+                     0, stream,  ntasks, device_tasks );
+  hipDeviceSynchronize();
+  HIP_CHECK(hipGetLastError(), "collocation_device_petite_combined_kernel Failed");
      
 }
 
@@ -150,7 +162,10 @@ void eval_collocation_masked_combined(
                util::div_ceil( nshells_max, threads.y ),
                ntasks );
 
-  hipLaunchKernelGGL(HIP_KERNEL_NAME(collocation_device_masked_combined_kernel<T>), dim3(blocks), dim3(threads), 0, stream,  ntasks, shells_device, device_tasks );
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(collocation_device_masked_combined_kernel<T>), dim3(blocks), dim3(threads), 
+                     0, stream,  ntasks, shells_device, device_tasks );
+  hipDeviceSynchronize();
+  HIP_CHECK(hipGetLastError(), "collocation_device_masked_combined_kernel Failed");
      
 }
 
@@ -193,9 +208,11 @@ void eval_collocation_petite_deriv1(
   dim3 blocks( util::div_ceil( npts,    threads.x ),
                util::div_ceil( nshells, threads.y ) );
 
-  hipLaunchKernelGGL(HIP_KERNEL_NAME(collocation_device_petite_kernel_deriv1<T>), dim3(blocks), dim3(threads), 0, stream,  nshells, nbf, npts, shells_device, offs_device,
-      pts_device, eval_device, deval_device_x, deval_device_y,
-      deval_device_z );
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(collocation_device_petite_kernel_deriv1<T>), dim3(blocks), dim3(threads), 
+                     0, stream,  nshells, nbf, npts, shells_device, offs_device, pts_device, eval_device, 
+                     deval_device_x, deval_device_y, deval_device_z );
+  hipDeviceSynchronize();
+  HIP_CHECK(hipGetLastError(), "collocation_device_petite_kernel_deriv1 Failed");
 
 }
 
@@ -249,9 +266,11 @@ void eval_collocation_masked_deriv1(
   dim3 blocks( util::div_ceil( npts,    threads.x ),
                util::div_ceil( nshells, threads.y ) );
 
-  hipLaunchKernelGGL(HIP_KERNEL_NAME(collocation_device_masked_kernel_deriv1<T>), dim3(blocks), dim3(threads), 0, stream,  nshells, nbf, npts, shells_device, mask_device, offs_device,
-      pts_device, eval_device, deval_device_x, deval_device_y,
-      deval_device_z );
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(collocation_device_masked_kernel_deriv1<T>), dim3(blocks), dim3(threads), 
+                     0, stream,  nshells, nbf, npts, shells_device, mask_device, offs_device,
+                     pts_device, eval_device, deval_device_x, deval_device_y, deval_device_z );
+  hipDeviceSynchronize();
+  HIP_CHECK(hipGetLastError(), "collocation_device_masked_kernel_deriv1 Failed");
 
 }
 
@@ -288,7 +307,10 @@ void eval_collocation_petite_combined_deriv1(
                util::div_ceil( nshells_max, threads.y ),
                ntasks );
 
-  hipLaunchKernelGGL(HIP_KERNEL_NAME(collocation_device_petite_combined_kernel_deriv1<T>), dim3(blocks), dim3(threads), 0, stream,  ntasks, device_tasks );
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(collocation_device_petite_combined_kernel_deriv1<T>), dim3(blocks), dim3(threads), 
+                     0, stream,  ntasks, device_tasks );
+  hipDeviceSynchronize();
+  HIP_CHECK(hipGetLastError(), "collocation_device_petite_combined_kernel_deriv1 Failed");
      
 }
 
@@ -329,7 +351,10 @@ void eval_collocation_masked_combined_deriv1(
                util::div_ceil( nshells_max, threads.y ),
                ntasks );
 
-  hipLaunchKernelGGL(HIP_KERNEL_NAME(collocation_device_masked_combined_kernel_deriv1<T>), dim3(blocks), dim3(threads), 0, stream,  ntasks, shells_device, device_tasks );
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(collocation_device_masked_combined_kernel_deriv1<T>), dim3(blocks), dim3(threads), 
+                     0, stream,  ntasks, shells_device, device_tasks );
+  hipDeviceSynchronize();
+  HIP_CHECK(hipGetLastError(), "collocation_device_masked_combined_kernel_deriv1 Failed");
      
 }
 
